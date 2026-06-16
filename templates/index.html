@@ -3,194 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Enrichment Engine Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Company Enrichment Master Dashboard</title>
     <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
+        :root { 
+            --bg-primary: #f1f5f9; 
+            --surface: #ffffff; 
+            --text-main: #0f172a; 
+            --primary: #2563eb; 
+            --accent: #3b82f6; 
+            --border: #e2e8f0; 
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-primary); color: var(--text-main); padding: 2rem; }
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 450px 1fr; gap: 2rem; }
+        header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        h1 { font-weight: 700; color: #1e3a8a; }
+        .card { background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: fit-content; }
+        .controls { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        input { flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
+        button { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-trigger { background: #10b981; }
+        ul { list-style: none; max-height: 700px; overflow-y: auto; }
+        li { padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        li:hover { background: #f8fafc; }
+        .status-badge { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .status-PENDING { background: #fef3c7; color: #d97706; }
+        .status-PROCESSING { background: #dbeafe; color: #2563eb; }
+        .status-COMPLETED { background: #d1fae5; color: #059669; }
+        .status-FAILED { background: #fee2e2; color: #dc2626; }
+        
+        /* Grid Layout for all 15 Fields */
+        .mca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.5rem; }
+        .detail-row { border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; }
+        .detail-row.full-width { grid-column: 1 / -1; }
+        .detail-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+        .detail-val { font-size: 1rem; margin-top: 0.25rem; font-weight: 500; word-break: break-all; color: #1e293b; }
+        .enrichment-section { background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
+        
+        @media (max-width: 1024px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body class="p-6 md:p-12 font-sans text-slate-800">
+<body>
+<div class="container">
+    <header>
+        <h1>Company Enrichment Engine</h1>
+        <button class="btn-trigger" onclick="triggerPipeline()">Enrich First 100 Companies</button>
+    </header>
 
-    <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight">Company Enrichment Engine</h1>
-                <p class="text-slate-600 mt-1">Live Management and Data Processing Interface</p>
-            </div>
-            <button id="enrichBtn" onclick="triggerBulkEnrichment()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-white font-semibold px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/20 text-sm">
-                Enrich First 100 Companies
-            </button>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="lg:col-span-1 flex flex-col gap-6">
-                <div class="glass-card rounded-2xl p-6 shadow-xl">
-                    <h2 class="text-lg font-bold text-blue-950 mb-4">Query Registries</h2>
-                    <div class="relative">
-                        <input 
-                            type="text" 
-                            id="searchQuery" 
-                            placeholder="Search by unique CIN (e.g. U26515KA2023PTC170754)..." 
-                            class="w-full bg-white/80 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-all"
-                            onkeyup="handleSearchKeyPress(event)"
-                        >
-                        <button onclick="executeCompanyLookup()" class="absolute right-2 top-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-                            Search
-                        </button>
-                    </div>
-                    <div id="searchFeedback" class="text-xs mt-2 hidden"></div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2">
-                <div class="glass-card rounded-2xl p-8 shadow-xl min-h-[400px] flex flex-col justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold text-blue-950 border-b border-slate-200/60 pb-3 mb-6">
-                            Comprehensive Master Specifications
-                        </h2>
-                        
-                        <div id="placeholderLayout" class="text-center py-16 text-slate-500">
-                            <svg class="w-16 h-16 mx-auto mb-4 text-slate-400 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <p class="text-sm italic">Provide a valid Corporate Identification Number (CIN) in the sidebar to populate full master data records profile matrix dynamically.</p>
-                        </div>
-
-                        <div id="dataSpecificationGrid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Company Name</span><p id="resName" class="text-base font-bold text-blue-900 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">CIN</span><p id="resCin" class="font-mono text-slate-700 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Registration Date</span><p id="resDate" class="text-slate-700 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Status</span><p id="resStatus" class="mt-0.5 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Class / Category</span><p id="resClassCategory" class="text-slate-700 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">ROC Office</span><p id="resRoc" class="text-slate-700 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Authorized Capital</span><p id="resAuthCap" class="font-semibold text-slate-700 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Paid Up Capital</span><p id="resPaidCap" class="font-semibold text-slate-700 mt-0.5">-</p></div>
-                            <div class="md:col-span-2 border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Registered Address</span><p id="resAddress" class="text-slate-700 mt-0.5 leading-relaxed">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">State / Pin</span><p id="resStatePin" class="text-slate-700 mt-0.5">-</p></div>
-                            <div class="border-b border-slate-100 pb-2"><span class="font-semibold text-slate-500 block text-xs uppercase tracking-wider">Industrial Classification</span><p id="resIndustry" class="text-slate-700 mt-0.5 truncate">-</p></div>
-                        </div>
-                    </div>
-
-                    <div id="enrichmentStatusFooter" class="hidden mt-8 pt-4 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                        <span class="text-slate-500">Pipeline Tracking State:</span>
-                        <span id="resEnrichmentBadge" class="font-bold tracking-wider px-3 py-1 rounded-md bg-amber-100 text-amber-800 uppercase">PENDING</span>
-                    </div>
-                </div>
-            </div>
-
+    <div class="card">
+        <div class="controls">
+            <input type="text" id="searchBox" placeholder="Search by Company Name or CIN..." oninput="searchCompanies()">
         </div>
+        <ul id="companyList"></ul>
     </div>
 
-    <script>
-        function handleSearchKeyPress(event) {
-            if (event.key === 'Enter') {
-                executeCompanyLookup();
-            }
-        }
+    <div class="card" id="detailPanel">
+        <h2 style="color: #1e3a8a; margin-bottom: 0.5rem;">Comprehensive Master Specifications</h2>
+        <hr style="border: 0; height: 1px; background: var(--border); margin-bottom: 1.5rem;">
+        <div id="detailContent"><i>Select a company from the sidebar records to populate full master data specifications layout.</i></div>
+    </div>
+</div>
 
-        async function executeCompanyLookup() {
-            const queryInput = document.getElementById('searchQuery').value.trim();
-            const feedback = document.getElementById('searchFeedback');
-            const placeholder = document.getElementById('placeholderLayout');
-            const grid = document.getElementById('dataSpecificationGrid');
-            const footer = document.getElementById('enrichmentStatusFooter');
+<script>
+    async function loadCompanies() {
+        const res = await fetch('/companies');
+        const data = await res.json();
+        renderList(data);
+    }
 
-            if (!queryInput) {
-                feedback.className = "text-xs mt-2 text-rose-600 block";
-                feedback.innerText = "Please input a corporate identifier query string first.";
-                return;
-            }
+    async function searchCompanies() {
+        const query = document.getElementById('searchBox').value;
+        if (!query) return loadCompanies();
+        const res = await fetch(`/search?q=${query}`);
+        const data = await res.json();
+        renderList(data);
+    }
 
-            feedback.className = "text-xs mt-2 text-blue-600 block";
-            feedback.innerText = "Querying live database array...";
+    function renderList(companies) {
+        const list = document.getElementById('companyList');
+        list.innerHTML = '';
+        companies.forEach(c => {
+            const li = document.createElement('li');
+            li.onclick = () => showDetails(c.id);
+            li.innerHTML = `
+                <div style="max-width: 75%;">
+                    <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.Company_Name}</strong>
+                    <div style="font-size: 0.85rem; color:#64748b;">CIN: ${c.CIN}</div>
+                </div>
+                <span class="status-badge status-${c.enrichment_status}">${c.enrichment_status}</span>
+            `;
+            list.appendChild(li);
+        });
+    }
 
-            try {
-                // 🎉 CRITICAL CORRECTION: Uses a relative URL. 
-                // This targets the deployment domain engine automatically without hardcoding addresses.
-                const response = await fetch(`/api/companies/${encodeURIComponent(queryInput)}`);
+    async function showDetails(id) {
+        const res = await fetch(`/company/${id}`);
+        const c = await res.json();
+        const content = document.getElementById('detailContent');
+        
+        content.innerHTML = `
+            <div class="enrichment-section">
+                <h3 style="font-size: 0.95rem; color: #1e40af; margin-bottom: 0.75rem; text-transform: uppercase;">Enriched Pipeline Artifacts</h3>
+                <div class="mca-grid" style="margin-top: 0;">
+                    <div class="detail-row"><div class="detail-label">Website</div><div class="detail-val">${c.website ? `<a href="${c.website}" target="_blank" style="color: var(--primary); font-weight:600;">${c.website}</a>` : '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Email ID</div><div class="detail-val">${c.email || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Contact No</div><div class="detail-val">${c.phone || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Pipeline Run Status</div><div class="detail-val"><span class="status-badge status-${c.enrichment_status}">${c.enrichment_status}</span></div></div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.95rem; color: #475569; margin-bottom: 0.5rem; text-transform: uppercase;"></h3>
+            <div class="mca-grid">
+                <div class="detail-row full-width"><div class="detail-label">Company Name</div><div class="detail-val" style="font-weight: 700; color: #0f172a; font-size:1.2rem;">${c.Company_Name}</div></div>
+                <div class="detail-row"><div class="detail-label">CIN</div><div class="detail-val" style="color: #1e3a8a; font-weight:600;">${c.CIN}</div></div>
+                <div class="detail-row"><div class="detail-label">Registration Date</div><div class="detail-val">${c.Company_Registration_Date || 'N/A'}</div></div>
                 
-                if (!response.ok) {
-                    throw new Error(response.status === 404 ? "Target identifier not registered inside database cluster." : "Database communication exception occurred.");
-                }
-
-                const companyData = await response.json();
-
-                // Map database fields to UI view text markers
-                document.getElementById('resName').innerText = companyData.Company_Name || "N/A";
-                document.getElementById('resCin').innerText = companyData.CIN || "N/A";
-                document.getElementById('resDate').innerText = companyData.Company_Registration_Date || "N/A";
-                document.getElementById('resClassCategory').innerText = `${companyData.Company_Class || '-'} / ${companyData.Company_Category || '-'}`;
-                document.getElementById('resRoc').innerText = companyData.Company_ROC || "N/A";
-                document.getElementById('resAddress').innerText = companyData.Company_Address || "N/A";
-                document.getElementById('resStatePin').innerText = `${companyData.Company_State || '-'} (Pin: ${companyData.Pin_Code || '-'})`;
-                document.getElementById('resIndustry').innerText = companyData.Company_Industrial_Classification || "N/A";
+                <div class="detail-row"><div class="detail-label">Company Category</div><div class="detail-val">${c.Company_Category || 'N/A'}</div></div>
+                <div class="detail-row"><div class="detail-label">Company Class</div><div class="detail-val">${c.Company_Class || 'N/A'}</div></div>
                 
-                // Format numbers gracefully as currencies
-                document.getElementById('resAuthCap').innerText = companyData.Authorized_Capital ? `₹${Number(companyData.Authorized_Capital).toLocaleString('en-IN')}` : "₹0";
-                document.getElementById('resPaidCap').innerText = companyData.Paidup_Capital ? `₹${Number(companyData.Paidup_Capital).toLocaleString('en-IN')}` : "₹0";
+                <div class="detail-row"><div class="detail-label">Listing Status</div><div class="detail-val">${c.Listing_Status || 'N/A'}</div></div>
+                <div class="detail-row"><div class="detail-label">Company Operations Status</div><div class="detail-val">${c.Company_Status || 'N/A'}</div></div>
+                
+                <div class="detail-row"><div class="detail-label">Authorized Capital</div><div class="detail-val">₹ ${c.Authorized_Capital ? c.Authorized_Capital.toLocaleString('en-IN') : '0'}</div></div>
+                <div class="detail-row"><div class="detail-label">Paid-up Capital</div><div class="detail-val">₹ ${c.Paidup_Capital ? c.Paidup_Capital.toLocaleString('en-IN') : '0'}</div></div>
+                
+                <div class="detail-row"><div class="detail-label">Registrar of Companies (ROC)</div><div class="detail-val">${c.Company_ROC || 'N/A'}</div></div>
+                <div class="detail-row"><div class="detail-label">State</div><div class="detail-val">${c.Company_State || 'N/A'}</div></div>
+                
+                <div class="detail-row"><div class="detail-label">Pin Code</div><div class="detail-val">${c.Pin_Code || 'N/A'}</div></div>
+                <div class="detail-row"><div class="detail-label">Sub Category</div><div class="detail-val">${c.Company_Sub_Category || 'N/A'}</div></div>
+                
+                <div class="detail-row full-width"><div class="detail-label">Industrial Classification</div><div class="detail-val">${c.Company_Industrial_Classification || 'N/A'}</div></div>
+                <div class="detail-row full-width"><div class="detail-row"><div class="detail-label">Registered Address</div><div class="detail-val">${c.Company_Address || 'N/A'}</div></div></div>
+            </div>
+        `;
+    }
 
-                // Setup Status Badges dynamically based on text conditions
-                const statusElement = document.getElementById('resStatus');
-                statusElement.innerText = (companyData.Company_Status || "Unknown").toUpperCase();
-                if ((companyData.Company_Status || "").toLowerCase() === 'active') {
-                    statusElement.className = "mt-0.5 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800";
-                } else {
-                    statusElement.className = "mt-0.5 inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800";
-                }
+    async function triggerPipeline() {
+        const res = await fetch('/pipeline/trigger', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message);
+        setTimeout(loadCompanies, 2000);
+    }
+// Relative routing works seamlessly on both your local PC and the cloud!
+async function loadCompanies() {
+    const res = await fetch('/companies');
+    const data = await res.json();
+    renderList(data);
+}
 
-                // Sync Enrichment Badges
-                const enrichmentElement = document.getElementById('resEnrichmentBadge');
-                const currentStatus = companyData.enrichment_status || "PENDING";
-                enrichmentElement.innerText = currentStatus.toUpperCase();
-                if (currentStatus.toLowerCase() === 'success' || currentStatus.toLowerCase() === 'completed') {
-                    enrichmentElement.className = "font-bold tracking-wider px-3 py-1 rounded-md bg-emerald-100 text-emerald-800 uppercase";
-                } else {
-                    enrichmentElement.className = "font-bold tracking-wider px-3 py-1 rounded-md bg-amber-100 text-amber-800 uppercase";
-                }
+async function searchCompanies() {
+    const query = document.getElementById('searchBox').value;
+    if (!query) return loadCompanies();
+    const res = await fetch(`/search?q=${query}`);
+    const data = await res.json();
+    renderList(data);
+}
 
-                // Structural rendering toggle updates
-                feedback.className = "hidden";
-                placeholder.className = "hidden";
-                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm";
-                footer.className = "mt-8 pt-4 border-t border-slate-200/60 flex items-center justify-between text-xs";
+async function showDetails(id) {
+    const res = await fetch(`/company/${id}`);
+    const c = await res.json();
+    // ... rest of your existing detail panel rendering code
+}
 
-            } catch (error) {
-                feedback.className = "text-xs mt-2 text-rose-600 block";
-                feedback.innerText = error.message;
-                grid.className = "hidden";
-                footer.className = "hidden";
-                placeholder.className = "text-center py-16 text-slate-500";
-            }
-        }
-
-        async function triggerBulkEnrichment() {
-            const enrichBtn = document.getElementById('enrichBtn');
-            enrichBtn.disabled = true;
-            enrichBtn.className = "bg-slate-400 text-white font-semibold px-5 py-3 rounded-xl text-sm cursor-not-allowed shadow-none";
-            enrichBtn.innerText = "Processing Enrichment Batch...";
-
-            try {
-                const response = await fetch('/api/enrich/batch', { method: 'POST' });
-                if (!response.ok) throw new Error("Bulk task invocation failure.");
-                alert("🎉 Enrichment engine task loop dispatched successfully across rows!");
-            } catch (err) {
-                alert(`❌ Enrichment Task Trigger Failure: ${err.message}`);
-            } finally {
-                enrichBtn.disabled = false;
-                enrichBtn.className = "bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-white font-semibold px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/20 text-sm";
-                enrichBtn.innerText = "Enrich First 100 Companies";
-            }
-        }
-    </script>
+async function triggerPipeline() {
+    const res = await fetch('/pipeline/trigger', { method: 'POST' });
+    const data = await res.json();
+    alert(data.message);
+    setTimeout(loadCompanies, 2000);
+}
+    loadCompanies();
+</script>
 </body>
 </html>
