@@ -65,46 +65,55 @@
 </div>
 
 <script>
+    // 1. Initial execution payload hook to gather defaults for the sidebar listing layout
     async function loadCompanies() {
         try {
+            const list = document.getElementById('companyList');
+            list.innerHTML = '<li style="color:#64748b; font-style:italic; padding:1rem;">Loading initial records...</li>';
+            
             const res = await fetch('/companies');
+            if (!res.ok) throw new Error("Could not fetch database records.");
             const data = await res.json();
             renderList(data);
         } catch (err) {
-            console.error("Sidebar loading failure:", err);
+            console.error("Sidebar setup error:", err);
+            document.getElementById('companyList').innerHTML = `<li style="color:#dc2626; font-size:0.85rem; padding:1rem;">Database offline or connection refused.</li>`;
         }
     }
 
+    // 2. Real-time inputs monitoring event tracker loop
     async function searchCompanies() {
         const query = document.getElementById('searchBox').value.trim();
         if (!query) return loadCompanies();
+        
         try {
             const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error("Search server execution fault.");
             const data = await res.json();
             renderList(data);
         } catch (err) {
-            console.error("Search evaluation error:", err);
+            console.error("Search fetch error:", err);
         }
     }
 
+    // 3. UI Generator block wrapper to inject database row structures inside the sidebar node tree
     function renderList(companies) {
         const list = document.getElementById('companyList');
         list.innerHTML = '';
         
-        if (companies.length === 0) {
-            list.innerHTML = '<li style="color:#64748b; font-style:italic; cursor:default;">No records match your query string.</li>';
+        if (!companies || companies.length === 0) {
+            list.innerHTML = '<li style="color:#64748b; font-style:italic; padding:1rem; cursor:default;">No records match your query string.</li>';
             return;
         }
 
         companies.forEach(c => {
             const currentStatus = c.enrichment_status || "PENDING";
             const li = document.createElement('li');
-            // Resolves c.CIN directly here to handle clicks flawlessly
-            li.onclick = () => showDetails(c.CIN || c.id);
+            li.onclick = () => showDetails(c.CIN);
             li.innerHTML = `
                 <div style="max-width: 75%;">
-                    <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.Company_Name || 'Unnamed Entity'}</strong>
-                    <div style="font-size: 0.85rem; color:#64748b;">CIN: ${c.CIN}</div>
+                    <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size:0.95rem;">${c.Company_Name || 'Unnamed Entity'}</strong>
+                    <div style="font-size: 0.8rem; color:#64748b; margin-top:0.25rem;">CIN: ${c.CIN}</div>
                 </div>
                 <span class="status-badge status-${currentStatus}">${currentStatus}</span>
             `;
@@ -112,11 +121,16 @@
         });
     }
 
+    // 4. Central specifications panel content constructor logic loop (Handles all 15 target metrics)
     async function showDetails(id) {
+        if (!id) return;
         try {
-            const res = await fetch(`/company/${encodeURIComponent(id)}`);
-            const c = await res.json();
             const content = document.getElementById('detailContent');
+            content.innerHTML = '<i>Fetching configuration properties matrix from Supabase...</i>';
+            
+            const res = await fetch(`/company/${encodeURIComponent(id)}`);
+            if (!res.ok) throw new Error("Failed to pull complete metrics detail mapping configuration.");
+            const c = await res.json();
             const currentStatus = c.enrichment_status || "PENDING";
             
             content.innerHTML = `
@@ -138,7 +152,7 @@
                     <div class="detail-row"><div class="detail-label">Company Category</div><div class="detail-val">${c.Company_Category || 'N/A'}</div></div>
                     <div class="detail-row"><div class="detail-label">Company Class</div><div class="detail-val">${c.Company_Class || 'N/A'}</div></div>
                     
-                    <div class="detail-row"><div class="detail-label">Listing Status</div><div class="detail-val">${c.Listing_Status || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Listing Status</div><div class="detail-val">${c.Listing_Status || 'Unlisted'}</div></div>
                     <div class="detail-row"><div class="detail-label">Company Operations Status</div><div class="detail-val">${c.Company_Status || 'N/A'}</div></div>
                     
                     <div class="detail-row"><div class="detail-label">Authorized Capital</div><div class="detail-val">₹ ${c.Authorized_Capital ? Number(c.Authorized_Capital).toLocaleString('en-IN') : '0'}</div></div>
@@ -159,6 +173,7 @@
         }
     }
 
+    // 5. Bulk pipeline background engine dispatcher script hook
     async function triggerPipeline() {
         try {
             const res = await fetch('/pipeline/trigger', { method: 'POST' });
@@ -166,12 +181,12 @@
             alert(data.message);
             setTimeout(loadCompanies, 2000);
         } catch (err) {
-            console.error("Pipeline failure:", err);
+            console.error("Pipeline run invocation error:", err);
         }
     }
 
-    // Run initialization on load
-    loadCompanies();
+    // 🚀 Automatically fire data fetches the exact second the template viewport engine anchors
+    window.addEventListener('DOMContentLoaded', loadCompanies);
 </script>
 </body>
 </html>
