@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Company Registry Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16241F;
+    --ink-light:#1F352C;
+    --paper:#ECE7D8;
+    --paper-dark:#DCD5BF;
+    --brass:#C99A4B;
+    --brass-dark:#9C7333;
+    --slate:#7FA096;
+    --rust:#A8503B;
+    --text-light:#EDE8DA;
+    --text-muted:#A9B6AE;
+    --text-dark:#2B2620;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--text-light);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:48px 24px 80px;
+  }
+  .wrap{ max-width:880px; margin:0 auto; }
+
+  .drawer-label{ text-align:center; margin-bottom:36px; }
+  .drawer-label .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    color:var(--slate);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Zilla Slab',serif;
+    font-weight:600;
+    font-size:34px;
+    margin:6px 0 0;
+    color:var(--text-light);
+  }
+
+  .search-row{
+    display:flex;
+    gap:10px;
+    background:var(--ink-light);
+    border:1px solid #2C4338;
+    border-radius:6px;
+    padding:10px 14px;
+    align-items:center;
+  }
+  .search-row svg{ flex-shrink:0; opacity:0.7; }
+  .search-row input[type="text"]{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text-light);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+  }
+  .search-row input::placeholder{ color:var(--text-muted); }
+
+  .meta-bar{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .tabs-area{ margin-top:28px; }
+  .tabs-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tab{
+    position:relative;
+    background:var(--brass);
+    color:#3B2A0F;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    font-weight:500;
+    padding:9px 16px 9px 14px;
+    border-radius:5px 5px 0 0;
+    cursor:pointer;
+    clip-path:polygon(6% 0%, 94% 0%, 100% 100%, 0% 100%);
+    transition:transform 0.12s ease, background 0.12s ease;
+  }
+  .tab:hover{ transform:translateY(-3px); background:#D9AC60; }
+  .tab.active{ background:var(--paper); transform:translateY(-3px); }
+
+  .card{
+    background:var(--paper);
+    color:var(--text-dark);
+    border-radius:2px 8px 8px 8px;
+    padding:26px 28px;
+    animation:pullCard 0.28s ease-out;
+  }
+  @keyframes pullCard{ from{ opacity:0; transform:translateY(-10px); } to{ opacity:1; transform:translateY(0); } }
+  .card-name{
+    font-family:'Zilla Slab',serif;
+    font-weight:600;
+    font-size:24px;
+    margin:0 0 4px;
+    border-bottom:1.5px solid var(--paper-dark);
+    padding-bottom:14px;
+  }
+  .card-sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--brass-dark);
+    margin:0 0 18px;
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px 24px;
+  }
+  .field{ border-top:1px solid var(--paper-dark); padding-top:8px; }
+  .field .k{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:#7A7156;
+    margin:0 0 3px;
+  }
+  .field .v{ font-size:14.5px; line-height:1.5; margin:0; word-break:break-word; }
+  .field .v a{ color:var(--rust); text-decoration:none; border-bottom:1px solid currentColor; }
+
+  .stamp-area{ margin-top:40px; text-align:center; padding:30px 0; }
+  .stamp{
+    display:inline-block;
+    border:3px solid var(--rust);
+    color:var(--rust);
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;
+    font-size:18px;
+    letter-spacing:0.12em;
+    padding:10px 26px;
+    transform:rotate(-3deg);
+    border-radius:4px;
+  }
+  .stamp-sub{ margin-top:14px; font-size:13px; color:var(--text-muted); }
+
+  .empty-state{ margin-top:60px; text-align:center; color:var(--text-muted); font-size:13px; }
+  .loading-dot{ opacity:0.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="drawer-label">
+    <div class="eyebrow">Records · Lookup</div>
+    <h1>Company registry search</h1>
+  </div>
+
+  <div class="search-row">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Type a company name…" />
+  </div>
+
+  <div class="meta-bar" id="statusText">Connecting to the registry…</div>
+
+  <div class="tabs-area" id="tabsArea" style="display:none;">
+    <div class="tabs-row" id="tabsRow"></div>
+    <div id="cardSlot"></div>
+  </div>
+
+  <div class="stamp-area" id="notFoundArea" style="display:none;">
+    <div class="stamp">NOT ON FILE</div>
+    <p class="stamp-sub" id="notFoundSub"></p>
+  </div>
+
+  <div class="empty-state" id="emptyState">Start typing a company name above.</div>
+
+</div>
+
+<script>
+let nameCol = null;
+let allColumns = [];
+let debounceTimer = null;
+
+const searchInput = document.getElementById('searchInput');
+const statusText = document.getElementById('statusText');
+const tabsArea = document.getElementById('tabsArea');
+const tabsRow = document.getElementById('tabsRow');
+const cardSlot = document.getElementById('cardSlot');
+const notFoundArea = document.getElementById('notFoundArea');
+const notFoundSub = document.getElementById('notFoundSub');
+const emptyState = document.getElementById('emptyState');
+
+fetch('/api/meta')
+  .then(r => r.json())
+  .then(data => {
+    nameCol = data.name_column;
+    allColumns = data.columns;
+    statusText.textContent = `Connected — ${data.total_rows.toLocaleString()} companies on file`;
+  })
+  .catch(() => {
+    statusText.textContent = 'Could not reach the backend. Is app.py running?';
+  });
+
+searchInput.addEventListener('input', e => {
+  clearTimeout(debounceTimer);
+  const value = e.target.value;
+  debounceTimer = setTimeout(() => runSearch(value), 250);
+});
+
+function runSearch(query){
+  const q = query.trim();
+  if (!q){
+    tabsArea.style.display = 'none';
+    notFoundArea.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  fetch('/api/search?q=' + encodeURIComponent(q))
+    .then(r => r.json())
+    .then(data => renderResults(data.results, q))
+    .catch(() => {
+      tabsArea.style.display = 'none';
+      notFoundArea.style.display = 'block';
+      notFoundSub.textContent = 'Search request failed — check the backend is running.';
+    });
+}
+
+function renderResults(matches, query){
+  cardSlot.innerHTML = '';
+
+  if (!matches.length){
+    tabsArea.style.display = 'none';
+    notFoundArea.style.display = 'block';
+    notFoundSub.textContent = `No record matches "${query}" in the registry.`;
+    return;
+  }
+
+  notFoundArea.style.display = 'none';
+  tabsArea.style.display = 'block';
+  tabsRow.innerHTML = '';
+
+  matches.forEach((row, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.textContent = row[nameCol] || '(unnamed)';
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderCard(row);
+    });
+    tabsRow.appendChild(tab);
+    if (i === 0) { tab.classList.add('active'); renderCard(row); }
+  });
+}
+
+function renderCard(row){
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const title = document.createElement('p');
+  title.className = 'card-name';
+  title.textContent = row[nameCol] || '(unnamed)';
+  card.appendChild(title);
+
+  const sub = document.createElement('p');
+  sub.className = 'card-sub';
+  sub.textContent = `Record · ${allColumns.length} fields on file`;
+  card.appendChild(sub);
+
+  const grid = document.createElement('div');
+  grid.className = 'field-grid';
+
+  allColumns.forEach(h => {
+    if (h === nameCol) return;
+    const field = document.createElement('div');
+    field.className = 'field';
+    const k = document.createElement('p');
+    k.className = 'k';
+    k.textContent = h;
+    const v = document.createElement('p');
+    v.className = 'v';
+    const val = row[h] || '—';
+    if (/^https?:\/\//i.test(val)){
+      const a = document.createElement('a');
+      a.href = val; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = val;
+      v.appendChild(a);
+    } else {
+      v.textContent = val;
+    }
+    field.appendChild(k);
+    field.appendChild(v);
+    grid.appendChild(field);
+  });
+
+  card.appendChild(grid);
+  cardSlot.innerHTML = '';
+  cardSlot.appendChild(card);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Ignore the massive 320MB dataset file
+company_master_data_2026-06-12.csv
+
+# Ignore local Python caching files
+__pycache__/
+*.pyc
+.env
