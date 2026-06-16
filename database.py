@@ -3,7 +3,12 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from config import Settings 
 
 settings_instance = Settings()
-engine = create_engine(settings_instance.DATABASE_URL)
+
+# Update your engine to force SSL mode requirement parameters
+engine = create_engine(
+    settings_instance.DATABASE_URL,
+    connect_args={"sslmode": "require"}
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
