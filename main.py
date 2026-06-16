@@ -12,9 +12,15 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Company Enrichment Engine")
 templates = Jinja2Templates(directory="templates")
 
-@app.get("/", response_class=HTMLResponse)
+# Open A:\full_dev_intern\main.py and update line 17 to this exact keyword syntax:
+
+@app.get("/")
 async def serve_dashboard(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    # Pass context explicitly as a named keyword argument
+    return templates.TemplateResponse(
+        name="index.html", 
+        context={"request": request}
+    )
 
 @app.get("/companies")
 def get_companies(db: Session = Depends(get_db)):
