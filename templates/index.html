@@ -66,112 +66,111 @@
 
 <script>
     async function loadCompanies() {
-        const res = await fetch('/companies');
-        const data = await res.json();
-        renderList(data);
+        try {
+            const res = await fetch('/companies');
+            const data = await res.json();
+            renderList(data);
+        } catch (err) {
+            console.error("Sidebar loading failure:", err);
+        }
     }
 
     async function searchCompanies() {
-        const query = document.getElementById('searchBox').value;
+        const query = document.getElementById('searchBox').value.trim();
         if (!query) return loadCompanies();
-        const res = await fetch(`/search?q=${query}`);
-        const data = await res.json();
-        renderList(data);
+        try {
+            const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            renderList(data);
+        } catch (err) {
+            console.error("Search evaluation error:", err);
+        }
     }
 
     function renderList(companies) {
         const list = document.getElementById('companyList');
         list.innerHTML = '';
+        
+        if (companies.length === 0) {
+            list.innerHTML = '<li style="color:#64748b; font-style:italic; cursor:default;">No records match your query string.</li>';
+            return;
+        }
+
         companies.forEach(c => {
+            const currentStatus = c.enrichment_status || "PENDING";
             const li = document.createElement('li');
-            li.onclick = () => showDetails(c.id);
+            // Resolves c.CIN directly here to handle clicks flawlessly
+            li.onclick = () => showDetails(c.CIN || c.id);
             li.innerHTML = `
                 <div style="max-width: 75%;">
-                    <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.Company_Name}</strong>
+                    <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.Company_Name || 'Unnamed Entity'}</strong>
                     <div style="font-size: 0.85rem; color:#64748b;">CIN: ${c.CIN}</div>
                 </div>
-                <span class="status-badge status-${c.enrichment_status}">${c.enrichment_status}</span>
+                <span class="status-badge status-${currentStatus}">${currentStatus}</span>
             `;
             list.appendChild(li);
         });
     }
 
     async function showDetails(id) {
-        const res = await fetch(`/company/${id}`);
-        const c = await res.json();
-        const content = document.getElementById('detailContent');
-        
-        content.innerHTML = `
-            <div class="enrichment-section">
-                <h3 style="font-size: 0.95rem; color: #1e40af; margin-bottom: 0.75rem; text-transform: uppercase;">Enriched Pipeline Artifacts</h3>
-                <div class="mca-grid" style="margin-top: 0;">
-                    <div class="detail-row"><div class="detail-label">Website</div><div class="detail-val">${c.website ? `<a href="${c.website}" target="_blank" style="color: var(--primary); font-weight:600;">${c.website}</a>` : '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
-                    <div class="detail-row"><div class="detail-label">Email ID</div><div class="detail-val">${c.email || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
-                    <div class="detail-row"><div class="detail-label">Contact No</div><div class="detail-val">${c.phone || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
-                    <div class="detail-row"><div class="detail-label">Pipeline Run Status</div><div class="detail-val"><span class="status-badge status-${c.enrichment_status}">${c.enrichment_status}</span></div></div>
+        try {
+            const res = await fetch(`/company/${encodeURIComponent(id)}`);
+            const c = await res.json();
+            const content = document.getElementById('detailContent');
+            const currentStatus = c.enrichment_status || "PENDING";
+            
+            content.innerHTML = `
+                <div class="enrichment-section">
+                    <h3 style="font-size: 0.95rem; color: #1e40af; margin-bottom: 0.75rem; text-transform: uppercase;">Enriched Pipeline Artifacts</h3>
+                    <div class="mca-grid" style="margin-top: 0;">
+                        <div class="detail-row"><div class="detail-label">Website</div><div class="detail-val">${c.website ? `<a href="${c.website}" target="_blank" style="color: var(--primary); font-weight:600;">${c.website}</a>` : '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Email ID</div><div class="detail-val">${c.email || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Contact No</div><div class="detail-val">${c.phone || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Pipeline Run Status</div><div class="detail-val"><span class="status-badge status-${currentStatus}">${currentStatus}</span></div></div>
+                    </div>
                 </div>
-            </div>
 
-            <h3 style="font-size: 0.95rem; color: #475569; margin-bottom: 0.5rem; text-transform: uppercase;"></h3>
-            <div class="mca-grid">
-                <div class="detail-row full-width"><div class="detail-label">Company Name</div><div class="detail-val" style="font-weight: 700; color: #0f172a; font-size:1.2rem;">${c.Company_Name}</div></div>
-                <div class="detail-row"><div class="detail-label">CIN</div><div class="detail-val" style="color: #1e3a8a; font-weight:600;">${c.CIN}</div></div>
-                <div class="detail-row"><div class="detail-label">Registration Date</div><div class="detail-val">${c.Company_Registration_Date || 'N/A'}</div></div>
-                
-                <div class="detail-row"><div class="detail-label">Company Category</div><div class="detail-val">${c.Company_Category || 'N/A'}</div></div>
-                <div class="detail-row"><div class="detail-label">Company Class</div><div class="detail-val">${c.Company_Class || 'N/A'}</div></div>
-                
-                <div class="detail-row"><div class="detail-label">Listing Status</div><div class="detail-val">${c.Listing_Status || 'N/A'}</div></div>
-                <div class="detail-row"><div class="detail-label">Company Operations Status</div><div class="detail-val">${c.Company_Status || 'N/A'}</div></div>
-                
-                <div class="detail-row"><div class="detail-label">Authorized Capital</div><div class="detail-val">₹ ${c.Authorized_Capital ? c.Authorized_Capital.toLocaleString('en-IN') : '0'}</div></div>
-                <div class="detail-row"><div class="detail-label">Paid-up Capital</div><div class="detail-val">₹ ${c.Paidup_Capital ? c.Paidup_Capital.toLocaleString('en-IN') : '0'}</div></div>
-                
-                <div class="detail-row"><div class="detail-label">Registrar of Companies (ROC)</div><div class="detail-val">${c.Company_ROC || 'N/A'}</div></div>
-                <div class="detail-row"><div class="detail-label">State</div><div class="detail-val">${c.Company_State || 'N/A'}</div></div>
-                
-                <div class="detail-row"><div class="detail-label">Pin Code</div><div class="detail-val">${c.Pin_Code || 'N/A'}</div></div>
-                <div class="detail-row"><div class="detail-label">Sub Category</div><div class="detail-val">${c.Company_Sub_Category || 'N/A'}</div></div>
-                
-                <div class="detail-row full-width"><div class="detail-label">Industrial Classification</div><div class="detail-val">${c.Company_Industrial_Classification || 'N/A'}</div></div>
-                <div class="detail-row full-width"><div class="detail-row"><div class="detail-label">Registered Address</div><div class="detail-val">${c.Company_Address || 'N/A'}</div></div></div>
-            </div>
-        `;
+                <div class="mca-grid">
+                    <div class="detail-row full-width"><div class="detail-label">Company Name</div><div class="detail-val" style="font-weight: 700; color: #0f172a; font-size:1.2rem;">${c.Company_Name || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">CIN</div><div class="detail-val" style="color: #1e3a8a; font-weight:600;">${c.CIN}</div></div>
+                    <div class="detail-row"><div class="detail-label">Registration Date</div><div class="detail-val">${c.Company_Registration_Date || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Company Category</div><div class="detail-val">${c.Company_Category || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Company Class</div><div class="detail-val">${c.Company_Class || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Listing Status</div><div class="detail-val">${c.Listing_Status || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Company Operations Status</div><div class="detail-val">${c.Company_Status || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Authorized Capital</div><div class="detail-val">₹ ${c.Authorized_Capital ? Number(c.Authorized_Capital).toLocaleString('en-IN') : '0'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Paid-up Capital</div><div class="detail-val">₹ ${c.Paidup_Capital ? Number(c.Paidup_Capital).toLocaleString('en-IN') : '0'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Registrar of Companies (ROC)</div><div class="detail-val">${c.Company_ROC || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">State</div><div class="detail-val">${c.Company_State || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Pin Code</div><div class="detail-val">${c.Pin_Code || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Sub Category</div><div class="detail-val">${c.Company_Sub_Category || 'N/A'}</div></div>
+                    
+                    <div class="detail-row full-width"><div class="detail-label">Industrial Classification</div><div class="detail-val">${c.Company_Industrial_Classification || 'N/A'}</div></div>
+                    <div class="detail-row full-width"><div class="detail-row"><div class="detail-label">Registered Address</div><div class="detail-val">${c.Company_Address || 'N/A'}</div></div></div>
+                </div>
+            `;
+        } catch (err) {
+            console.error("Detail rendering error:", err);
+        }
     }
 
     async function triggerPipeline() {
-        const res = await fetch('/pipeline/trigger', { method: 'POST' });
-        const data = await res.json();
-        alert(data.message);
-        setTimeout(loadCompanies, 2000);
+        try {
+            const res = await fetch('/pipeline/trigger', { method: 'POST' });
+            const data = await res.json();
+            alert(data.message);
+            setTimeout(loadCompanies, 2000);
+        } catch (err) {
+            console.error("Pipeline failure:", err);
+        }
     }
-// Relative routing works seamlessly on both your local PC and the cloud!
-async function loadCompanies() {
-    const res = await fetch('/companies');
-    const data = await res.json();
-    renderList(data);
-}
 
-async function searchCompanies() {
-    const query = document.getElementById('searchBox').value;
-    if (!query) return loadCompanies();
-    const res = await fetch(`/search?q=${query}`);
-    const data = await res.json();
-    renderList(data);
-}
-
-async function showDetails(id) {
-    const res = await fetch(`/company/${id}`);
-    const c = await res.json();
-    // ... rest of your existing detail panel rendering code
-}
-
-async function triggerPipeline() {
-    const res = await fetch('/pipeline/trigger', { method: 'POST' });
-    const data = await res.json();
-    alert(data.message);
-    setTimeout(loadCompanies, 2000);
-}
+    // Run initialization on load
     loadCompanies();
 </script>
 </body>
