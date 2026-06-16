@@ -18,17 +18,25 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    """
+    Renders the central split-panel system analytics dashboard UI interface.
+    Uses modern keyword arguments to prevent template engine signature crashes.
+    """
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"request": request}
+    )
 
 @app.get("/companies")
 async def get_initial_companies(db: Session = Depends(get_db)):
-    """Fetches the top 50 rows to initialize the sidebar layout view."""
+    """Fetches the top 50 rows to initialize the sidebar layout view on load."""
     companies = db.query(models.Company).limit(50).all()
     return companies
 
 @app.get("/search")
 async def search_companies(q: str = Query(...), db: Session = Depends(get_db)):
-    """Handles real-time queries matching text patterns across CIN or Name."""
+    """Handles real-time text matching queries across CIN or Name values."""
     search_pattern = f"%{q}%"
     companies = db.query(models.Company).filter(
         or_(
@@ -40,14 +48,13 @@ async def search_companies(q: str = Query(...), db: Session = Depends(get_db)):
 
 @app.get("/company/{id}")
 async def get_company_details(id: str, db: Session = Depends(get_db)):
-    """Fetches details for a single record row using its unique string ID (CIN)."""
+    """Fetches full specifications for a single company row using its unique CIN string."""
     company = db.query(models.Company).filter(models.Company.CIN == id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company profile data row missing.")
     return company
 
-@app.get("/pipeline/trigger")
 @app.post("/pipeline/trigger")
 async def trigger_pipeline():
-    """Placeholder endpoint for matching your pipeline click interaction triggers."""
+    """Endpoint hook for your bulk background enrichment dispatch actions."""
     return {"message": "Enrichment pipeline dispatch process initialized for the target batch!"}
