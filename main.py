@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 import models
 from database import engine, get_db
 
@@ -22,20 +23,39 @@ async def serve_dashboard(request: Request):
     """
     Renders the central system analytics dashboard UI interface.
     """
-    # Explicitly passing request as both a keyword parameter and context key
-    # completely satisfies both older and newer FastAPI/Starlette dependencies.
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={"request": request}
     )
 
-@app.get("/api/companies/{cin}")
-async def get_company_by_cin(cin: str, db: Session = Depends(get_db)):
+@app.get("/api/companies/{query_string}")
+async def get_company(query_string: str, db: Session = Depends(get_db)):
     """
-    API Endpoint: Fetches detailed profile metrics for a specific target company via its unique CIN.
+    API Endpoint: Fetches company records by matching either an exact CIN 
+    or performing a case-insensitive search on the Company Name.
     """
-    company = db.query(models.Company).filter(models.Company.CIN == cin.upper()).first()
-    if not company:
-        raise HTTPException(status_code=404, detail="Requested Corporate Identifier (CIN) not found inside database registries.")
-    return company
+    try:
+        search_term = f"%{query_string}%"
+        
+        company = db.query(models.Company).filter(
+            or_(
+                models.Company.CIN == query_string.upper(),
+                models.Company.Company_Name.ilike(search_term)
+            )
+        ).first()
+        
+        if not company:
+            raise HTTPException(
+                status_code=404, 
+                detail="No company matching that query string could be found."
+            )
+            
+        return company
+        
+    except Exception as e:
+        # Catch connection dropouts or unexpected structural exceptions
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Internal Database Exception: {str(e)}"
+        )
