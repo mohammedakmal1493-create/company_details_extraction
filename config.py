@@ -2,15 +2,12 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DB_USER: str = os.getenv("DB_USER", "root")
-    # REPLACE THIS WITH YOUR ACTUAL MYSQL WORKBENCH PASSWORD
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "root")
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
-    DB_PORT: str = os.getenv("DB_PORT", "3306")
-    DB_NAME: str = os.getenv("DB_NAME", "company_enrichment")
+    DB_USER: str = "postgres.huaunrcimslfefjnwzvz"
+    DB_PASSWORD: str = "RnBS01iSLCnzyU7y"
+    DB_HOST: str = "aws-1-ap-northeast-1.pooler.supabase.com"  # <- If this is the direct host, ensure port is 5432
+    DB_PORT: str = "5432"  # <- Direct connection port
+    DB_NAME: str = "postgres"
 
     @property
     def DATABASE_URL(self) -> str:
-        return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
-settings = Settings()
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
