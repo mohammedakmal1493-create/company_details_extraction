@@ -16,13 +16,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--bg-primary); color: var(--text-main); padding: 2rem; }
         .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 450px 1fr; gap: 2rem; }
-        header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        header { grid-column: 1 / -1; display: flex; justify-content: flex-start; align-items: center; margin-bottom: 1rem; }
         h1 { font-weight: 700; color: #1e3a8a; }
         .card { background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: fit-content; }
         .controls { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
         input { flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
-        button { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .btn-trigger { background: #10b981; }
         ul { list-style: none; max-height: 700px; overflow-y: auto; }
         li { padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         li:hover { background: #f8fafc; }
@@ -46,7 +44,6 @@
 <div class="container">
     <header>
         <h1>Company Enrichment Engine</h1>
-        <button class="btn-trigger" onclick="triggerPipeline()">Enrich First 100 Companies</button>
     </header>
 
     <div class="card">
@@ -110,7 +107,6 @@
             const li = document.createElement('li');
             li.onclick = () => showDetails(c.CIN);
             
-            // Generate clean card injection data—Rendering the status badge ONLY if it is not 'PENDING'
             let badgeHtml = '';
             if (currentStatus !== "PENDING") {
                 badgeHtml = `<span class="status-badge status-${currentStatus}">${currentStatus}</span>`;
@@ -139,7 +135,6 @@
             const c = await res.json();
             const currentStatus = c.enrichment_status || "PENDING";
             
-            // Build status display format inside the right content panel details container
             let pipelineStatusHtml = '<span style="color:#94a3b8; font-weight:500;">Not Run Yet</span>';
             if (currentStatus !== "PENDING") {
                 pipelineStatusHtml = `<span class="status-badge status-${currentStatus}">${currentStatus}</span>`;
@@ -185,16 +180,9 @@
         }
     }
 
-    // 5. Bulk pipeline background engine dispatcher script hook
+    // 5. Unused internal function kept to preserve potential script logic calls safely
     async function triggerPipeline() {
-        try {
-            const res = await fetch('/pipeline/trigger', { method: 'POST' });
-            const data = await res.json();
-            alert(data.message);
-            setTimeout(loadCompanies, 2000);
-        } catch (err) {
-            console.error("Pipeline run invocation error:", err);
-        }
+        console.log("Pipeline button context omitted from visual layout tree.");
     }
 
     window.addEventListener('DOMContentLoaded', loadCompanies);
