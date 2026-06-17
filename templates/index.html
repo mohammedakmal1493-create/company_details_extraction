@@ -3,206 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Enrichment Engine</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Company Enrichment Master Dashboard</title>
     <style>
-        :root {
-            --primary-bg: #f4f6f9;
-            --panel-bg: rgba(255, 255, 255, 0.9);
-            --navy-dark: #1e3a8a;
-            --text-muted: #64748b;
+        :root { 
+            --bg-primary: #f1f5f9; 
+            --surface: #ffffff; 
+            --text-main: #0f172a; 
+            --primary: #2563eb; 
+            --accent: #3b82f6; 
+            --border: #e2e8f0; 
         }
-
-        body {
-            background-color: var(--primary-bg);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #1e293b;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--navy-dark);
-            font-size: 1.75rem;
-        }
-
-        /* Glassmorphism Panel structures */
-        .glass-panel {
-            background: var(--panel-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            padding: 24px;
-            height: calc(100vh - 140px);
-            overflow-y: auto;
-        }
-
-        .search-box {
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            padding: 10px 14px;
-            font-size: 0.95rem;
-        }
-
-        /* Company Card Layouts - Status badges removed entirely */
-        .company-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            background: #ffffff;
-        }
-
-        .company-card:hover {
-            border-color: #3b82f6;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .company-card.active {
-            border-left: 4px solid #2563eb;
-            background-color: #eff6ff;
-        }
-
-        .company-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-
-        .company-cin {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-family: monospace;
-        }
-
-        .section-title {
-            color: var(--navy-dark);
-            font-weight: 700;
-            font-size: 1.4rem;
-            margin-bottom: 20px;
-        }
-
-        .data-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #2563eb;
-            letter-spacing: 0.05em;
-        }
-
-        .data-value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 16px;
-        }
-
-        .artifact-box {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 24px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-primary); color: var(--text-main); padding: 2rem; }
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 450px 1fr; gap: 2rem; }
+        header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        h1 { font-weight: 700; color: #1e3a8a; }
+        .card { background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: fit-content; }
+        .controls { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        input { flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
+        button { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-trigger { background: #10b981; }
+        ul { list-style: none; max-height: 700px; overflow-y: auto; }
+        li { padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        li:hover { background: #f8fafc; }
+        .status-badge { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .status-PROCESSING { background: #dbeafe; color: #2563eb; }
+        .status-COMPLETED { background: #d1fae5; color: #059669; }
+        .status-FAILED { background: #fee2e2; color: #dc2626; }
+        
+        /* Grid Layout for all 15 Fields */
+        .mca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.5rem; }
+        .detail-row { border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; }
+        .detail-row.full-width { grid-column: 1 / -1; }
+        .detail-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+        .detail-val { font-size: 1rem; margin-top: 0.25rem; font-weight: 500; word-break: break-all; color: #1e293b; }
+        .enrichment-section { background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
+        
+        @media (max-width: 1024px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
+<div class="container">
+    <header>
+        <h1>Company Enrichment Engine</h1>
+        <button class="btn-trigger" onclick="triggerPipeline()">Enrich First 100 Companies</button>
+    </header>
 
-    <nav class="navbar navbar-light bg-transparent py-4">
-        <div class="container-fluid px-5">
-            <span class="navbar-brand">Company Enrichment Engine</span>
-            <button class="btn btn-success fw-bold px-4 py-2" id="btnEnrichBatch" style="border-radius: 8px;">
-                Enrich First 100 Companies
-            </button>
+    <div class="card">
+        <div class="controls">
+            <input type="text" id="searchBox" placeholder="Search by Company Name or CIN..." oninput="searchCompanies()">
         </div>
-    </nav>
-
-    <div class="container-fluid px-5">
-        <div class="row g-4">
-            
-            <div class="col-md-4">
-                <div class="glass-panel">
-                    <input type="text" class="form-control search-box mb-4" id="searchBar" placeholder="Search by Company Name or CIN...">
-                    <div id="companyListContainer">
-                        </div>
-                </div>
-            </div>
-
-            <div class="col-md-8">
-                <div class="glass-panel" id="masterPanelContainer">
-                    <div class="d-flex h-100 flex-column justify-content-center align-items-center text-center text-muted" id="emptyStateView">
-                        <h3 class="fw-bold" style="color: var(--navy-dark);">Comprehensive Master Specifications</h3>
-                        <p class="fst-italic max-w-md">Select a company from the sidebar records to populate full master data specifications layout views.</p>
-                    </div>
-
-                    <div class="d-none" id="specsDataDisplayView">
-                        <div class="artifact-box">
-                            <h6 class="fw-bold text-uppercase tracking-wider mb-3" style="color: #1e3a8a; font-size: 0.85rem;">Enriched Pipeline Artifacts</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="data-label">Website</div>
-                                    <div class="data-value" id="specWebsite">Not Enriched</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="data-label">Email ID</div>
-                                    <div class="data-value" id="specEmail">Not Enriched</div>
-                                </div>
-                                <div class="col-md-6 mt-2">
-                                    <div class="data-label">Contact No</div>
-                                    <div class="data-value" id="specPhone">Not Enriched</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h5 class="data-label" style="color: var(--text-muted);">Company Name</h5>
-                        <h3 class="fw-bold mb-4" id="specCompanyName" style="color: #0f172a; text-transform: uppercase;">-</h3>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="data-label">CIN</div>
-                                <div class="data-value" id="specCIN" style="font-family: monospace; color: #2563eb;">-</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="data-label">Registration Date</div>
-                                <div class="data-value" id="specRegDate">-</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="data-label">Company Category</div>
-                                <div class="data-value" id="specCategory">-</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="data-label">Company Class</div>
-                                <div class="data-value" id="specClass">-</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="data-label">Listing Status</div>
-                                <div class="data-value" id="specListing">-</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="data-label">Company Operations Status</div>
-                                <div class="data-value" id="specStatus">-</div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="data-label">Registered Office Address</div>
-                                <div class="data-value" id="specAddress" style="font-weight: 500;">-</div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
+        <ul id="companyList"></ul>
     </div>
 
-    <script>
-        // Make sure your script.js rendering matches this clean structure!
-        // Ensure you drop any strings that inject yellow status tags into your elements.
-    </script>
+    <div class="card" id="detailPanel">
+        <h2 style="color: #1e3a8a; margin-bottom: 0.5rem;">Comprehensive Master Specifications</h2>
+        <hr style="border: 0; height: 1px; background: var(--border); margin-bottom: 1.5rem;">
+        <div id="detailContent"><i>Select a company from the sidebar records to populate full master data specifications layout.</i></div>
+    </div>
+</div>
+
+<script>
+    // 1. Initial execution payload hook to gather defaults for the sidebar listing layout
+    async function loadCompanies() {
+        try {
+            const list = document.getElementById('companyList');
+            list.innerHTML = '<li style="color:#64748b; font-style:italic; padding:1rem;">Loading initial records...</li>';
+            
+            const res = await fetch('/companies');
+            if (!res.ok) throw new Error("Could not fetch database records.");
+            const data = await res.json();
+            renderList(data);
+        } catch (err) {
+            console.error("Sidebar setup error:", err);
+            document.getElementById('companyList').innerHTML = `<li style="color:#dc2626; font-size:0.85rem; padding:1rem;">Database offline or connection refused.</li>`;
+        }
+    }
+
+    // 2. Real-time inputs monitoring event tracker loop
+    async function searchCompanies() {
+        const query = document.getElementById('searchBox').value.trim();
+        if (!query) return loadCompanies();
+        
+        try {
+            const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            if (!res.ok) throw new Error("Search server execution fault.");
+            const data = await res.json();
+            renderList(data);
+        } catch (err) {
+            console.error("Search fetch error:", err);
+        }
+    }
+
+    // 3. UI Generator block wrapper to inject database row structures inside the sidebar node tree
+    function renderList(companies) {
+        const list = document.getElementById('companyList');
+        list.innerHTML = '';
+        
+        if (!companies || companies.length === 0) {
+            list.innerHTML = '<li style="color:#64748b; font-style:italic; padding:1rem; cursor:default;">No records match your query string.</li>';
+            return;
+        }
+
+        companies.forEach(c => {
+            const currentStatus = c.enrichment_status || "PENDING";
+            const li = document.createElement('li');
+            li.onclick = () => showDetails(c.CIN);
+            
+            // Generate clean card injection data—Rendering the status badge ONLY if it is not 'PENDING'
+            let badgeHtml = '';
+            if (currentStatus !== "PENDING") {
+                badgeHtml = `<span class="status-badge status-${currentStatus}">${currentStatus}</span>`;
+            }
+
+            li.innerHTML = `
+                <div style="max-width: 85%;">
+                    <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size:0.95rem;">${c.Company_Name || 'Unnamed Entity'}</strong>
+                    <div style="font-size: 0.8rem; color:#64748b; margin-top:0.25rem;">CIN: ${c.CIN}</div>
+                </div>
+                ${badgeHtml}
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    // 4. Central specifications panel content constructor logic loop (Handles all 15 target metrics)
+    async function showDetails(id) {
+        if (!id) return;
+        try {
+            const content = document.getElementById('detailContent');
+            content.innerHTML = '<i>Fetching configuration properties matrix from Supabase...</i>';
+            
+            const res = await fetch(`/company/${encodeURIComponent(id)}`);
+            if (!res.ok) throw new Error("Failed to pull complete metrics detail mapping configuration.");
+            const c = await res.json();
+            const currentStatus = c.enrichment_status || "PENDING";
+            
+            // Build status display format inside the right content panel details container
+            let pipelineStatusHtml = '<span style="color:#94a3b8; font-weight:500;">Not Run Yet</span>';
+            if (currentStatus !== "PENDING") {
+                pipelineStatusHtml = `<span class="status-badge status-${currentStatus}">${currentStatus}</span>`;
+            }
+            
+            content.innerHTML = `
+                <div class="enrichment-section">
+                    <h3 style="font-size: 0.95rem; color: #1e40af; margin-bottom: 0.75rem; text-transform: uppercase;">Enriched Pipeline Artifacts</h3>
+                    <div class="mca-grid" style="margin-top: 0;">
+                        <div class="detail-row"><div class="detail-label">Website</div><div class="detail-val">${c.website ? `<a href="${c.website}" target="_blank" style="color: var(--primary); font-weight:600;">${c.website}</a>` : '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Email ID</div><div class="detail-val">${c.email || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Contact No</div><div class="detail-val">${c.phone || '<span style="color:#94a3b8;">Not Enriched</span>'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Pipeline Run Status</div><div class="detail-val">${pipelineStatusHtml}</div></div>
+                    </div>
+                </div>
+
+                <div class="mca-grid">
+                    <div class="detail-row full-width"><div class="detail-label">Company Name</div><div class="detail-val" style="font-weight: 700; color: #0f172a; font-size:1.2rem;">${c.Company_Name || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">CIN</div><div class="detail-val" style="color: #1e3a8a; font-weight:600;">${c.CIN}</div></div>
+                    <div class="detail-row"><div class="detail-label">Registration Date</div><div class="detail-val">${c.Company_Registration_Date || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Company Category</div><div class="detail-val">${c.Company_Category || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Company Class</div><div class="detail-val">${c.Company_Class || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Listing Status</div><div class="detail-val">${c.Listing_Status || 'Unlisted'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Company Operations Status</div><div class="detail-val">${c.Company_Status || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Authorized Capital</div><div class="detail-val">₹ ${c.Authorized_Capital ? Number(c.Authorized_Capital).toLocaleString('en-IN') : '0'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Paid-up Capital</div><div class="detail-val">₹ ${c.Paidup_Capital ? Number(c.Paidup_Capital).toLocaleString('en-IN') : '0'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Registrar of Companies (ROC)</div><div class="detail-val">${c.Company_ROC || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">State</div><div class="detail-val">${c.Company_State || 'N/A'}</div></div>
+                    
+                    <div class="detail-row"><div class="detail-label">Pin Code</div><div class="detail-val">${c.Pin_Code || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label">Sub Category</div><div class="detail-val">${c.Company_Sub_Category || 'N/A'}</div></div>
+                    
+                    <div class="detail-row full-width"><div class="detail-label">Industrial Classification</div><div class="detail-val">${c.Company_Industrial_Classification || 'N/A'}</div></div>
+                    <div class="detail-row full-width"><div class="detail-row"><div class="detail-label">Registered Address</div><div class="detail-val">${c.Company_Address || 'N/A'}</div></div></div>
+                </div>
+            `;
+        } catch (err) {
+            console.error("Detail rendering error:", err);
+        }
+    }
+
+    // 5. Bulk pipeline background engine dispatcher script hook
+    async function triggerPipeline() {
+        try {
+            const res = await fetch('/pipeline/trigger', { method: 'POST' });
+            const data = await res.json();
+            alert(data.message);
+            setTimeout(loadCompanies, 2000);
+        } catch (err) {
+            console.error("Pipeline run invocation error:", err);
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadCompanies);
+</script>
 </body>
 </html>
