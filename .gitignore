@@ -5,3 +5,6 @@ company_master_data_2026-06-12.csv
 __pycache__/
 *.pyc
 .env
+*.csv
+cleaned_company_master_data.csv
+company_master_data_2026-06-12.csv
